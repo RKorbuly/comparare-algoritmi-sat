@@ -1,0 +1,210 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[romanian]{babel}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+% Configurare pentru cod Python
+\lstset{
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue},
+  commentstyle=\color{gray!60},
+  stringstyle=\color{red!60},
+  numbers=left,
+  numberstyle=\tiny\color{gray!60},
+  stepnumber=1,
+  numbersep=5pt,
+  frame=single,
+  breaklines=true,
+  showstringspaces=false,
+  tabsize=2
+}
+\begin{document}
+\title{Compararea teoretică și experimentală a algoritmilor SAT: Rezoluție, DP și DPLL}
+\author{ Korbuly Robert \\ Facultatea de Matematică și Informatică \\ Universitatea de Vest Timisoara \\ E-mail : robert.korbuly06@e-uvt.ro}
+\date{10 Mai 2025}
+
+\maketitle
+
+\begin{abstract}
+Lucrarea prezintă o comparație teoretică și experimentală a trei algoritmi compleți pentru problema satisfiabilității booleene (SAT) în logica propozițională: algoritmul de rezoluție, Davis–Putnam (DP) și Davis–Putnam–Logemann–Loveland (DPLL). Acești algoritmi vor fi implementați în limbajul Python, iar apoi vor fi supuși la teste pentru a compara timpul mediu de execuție.
+
+\textbf{Cuvinte cheie:} \textit{Satisfiabilitate, DP, DPLL, rezoluție}
+\end{abstract}
+\newpage
+\tableofcontents
+\newpage
+\section{Introducere}
+Problema satisfiabilității booleene (SAT) cere determinarea dacă există o interpretare (asignare de adevăr) care să satisfacă o formulă booleană dată. Echivalent, dată o formulă logică în forma normală conjunctivă (FNC sau CNF – conjunctive normal form), SAT întreabă dacă putem atribui valorile True/False variabilelor astfel încât toate clauzele formulei să fie evaluate la True. SAT este primul exemplu de problemă NP-completă demonstrată (teorema Cook-Levin, 1971) \cite{handbook}, având semnificație teoretică majoră în informatică și multiple aplicații practice (verificare de modele, planificare automatizată, diagnosticare AI etc.). Datorită importanței sale, numeroși algoritmi de satisfiabilitate au fost dezvoltați, variind de la metode de demonstrare automată a teoremelor (bază logică) la algoritmi de căutare euristică.
+
+În această lucrare vor fi comparate trei metode teoretice și practice:
+\begin{itemize}
+  \item \textbf{Algoritmul de rezoluție} (Robinson, 1965) – deducție prin regula rezoluției și completitudine prin refutare.
+  \item \textbf{Davis–Putnam (DP)} (1960) – decizie prin eliminarea variabilelor cu pași de propagare unitate și eliminare literali puri.
+  \item \textbf{DPLL} (1962) – backtracking optimizat cu propagare unitate, eliminare literali puri și ramificare asupra literaliilor.
+\end{itemize}
+\subsection{Declarație de autenticitate}
+Declar, pe propria răspundere, că acest proiect este rezultatul exclusiv al efortului meu personal și reflectă ideile și contribuțiile mele originale. Toate sursele sunt citate conform standardelor academice, iar sunt dispus să ofer orice clarificări suplimentare. Confirm, de asemenea, că acest proiect nu a fost utilizat anterior în alte scopuri și îmi asum responsabilitatea pentru autenticitatea sa.
+\section{Reprezentarea formulelor și definiții de bază}
+\subsection{Formule CNF}
+O formulă în \emph{forma normală conjunctivă} (CNF) este o conjuncție de clauze, fiecare clauză fiind o disjuncție de literali. Un \emph{literal} este o variabilă booleană $x$ sau negația ei $\neg x$. Exemplu:
+\[
+  (x_1\lor\neg x_2\lor x_3)\land(x_2 \lor x_4)\land(\neg x_1\lor\neg x_3\lor{x_4}).
+\]
+
+\subsection{Satisfiabilitate, completitudine, complexitate}
+\begin{itemize}
+  \item \textbf{Satisfiabilă (SAT):} există o asignare valorilor True/False care face fiecare clauză adevărată.
+  \item \textbf{Nesatisfiabilă (UNSAT):} nicio asignare nu poate satisface toate clauzele.
+  \item \textbf{Corectitudine:} algoritmul dă răspuns corect pentru orice instanță.
+\end{itemize}
+
+\section{Algoritmul de rezoluție}
+Algoritmul de rezoluție este o metodă bazată pe deducție logică ce utilizează regula de rezoluție ca pas principal de inferență. Regula rezoluției spune că, având două clauze care conțin literali complementari (un literal și negația lui), putem deduce o nouă clauză numită rezolventă care conține toți literalii din cele două clauze, exceptând perechea complementară.\cite{handbook} Formal, dacă avem clauzele $C_1 = A \lor l$ și $C_2 = B \lor \neg l$, regula produce rezolventa
+\[
+  R = A \lor B.
+\]
+Completitudinea prin refutare garantează că, dacă formula este nesatisfiabilă, se poate deduce clauza goală prin aplicații finite ale rezoluției.
+\newpage
+\subsection{Descriere pseudocod}
+\begin{lstlisting}[literate={ă}{{\u{a}}}1 {â}{{\^a}}1 {î}{{\^{\i}}}1 {ș}{{\c{s}}}1 {ț}{{\c{t}}}1 {∈}{{$\in$}}1 {∖}{{$\setminus$}}1 {∪}{{$\cup$}}1 {¬}{{$\neg$}}1 {„}{{\quotedblbase}}1 {”}{{\textquotedblright}}1 {∉}{{$\notin$}}1]
+Rez(C):
+repetă
+    pentru fiecare pereche de clauze (Ci, Cj) din C:
+        dacă există literal l astfel încât l ∈ Ci și ¬l ∈ Cj:
+            R <- (Ci ∖ {l}) ∪ (Cj ∖ {¬l})   // rezolventă
+            dacă R este clauză vidă:
+                return „nesatisfiabil”
+            dacă R ∉ C:
+                adaugă R în C
+until nici o rezolventă nouă nu s-a adăugat
+    return „satisfiabil”
+\end{lstlisting}
+
+\section{Algoritmul Davis--Putnam (DP)}
+Metoda Davis–Putnam, descrisă în 1960, combină rezoluția cu strategii de reducere a formulei, într-un algoritm complet de decizie. Scopul algoritmului este de a elimina variabilele una câte una din formulă prin aplicarea rezoluției în mod sistematic, astfel încât la final fie obținem o formulă vidă (ce indică satisfiabilitate), fie clauza vidă (indicând nesatisfiabilitate). \cite{davis-putnam1960} Spre deosebire de rezoluția exhaustivă, DP intercalează pașii de rezoluție cu simplificări ale formulei, ceea ce îl face mai eficient practic decât aplicarea orbească a tuturor rezolvențelor.
+\subsection{Pași principali}
+\begin{enumerate}
+  \item \textbf{Propagare unitate:} dacă există o clauză unitate $\{l\}$, asignăm $l=true$, eliminăm clauzele cu $l$, eliminăm $\neg l$ din rest.
+  \item \textbf{Eliminarea literaliilor puri:} literali ce apar doar în aceeași polaritate se pot seta arbitrar pentru a satisface toate clauzele în care apar.
+  \item \textbf{Eliminare variabilă prin rezoluție:} alegem variabila $x$ și generăm toate rezolventele dintre clauzele cu $x$ și cele cu $\neg x$, apoi eliminăm clauzele inițiale ce conțin $x$ sau $\neg x$.
+  \item Repetăm pașii până obținem formula vidă (SAT) sau clauza vidă (UNSAT).
+\end{enumerate}
+\subsection{Implementare Python}
+\begin{lstlisting}[literate={ă}{{\u{a}}}1 {â}{{\^a}}1 {î}{{\^{\i}}}1 {ș}{{\c{s}}}1 {ț}{{\c{t}}}1 {∈}{{$\in$}}1 {∖}{{$\setminus$}}1 {∪}{{$\cup$}}1 {¬}{{$\neg$}}1 {„}{{\quotedblbase}}1 {”}{{\textquotedblright}}1 {∉}{{$\notin$}}1]
+DP(F):
+ dacă F conține clauză vidă:
+        return „nesatisfiabil”
+    dacă F este vidă:
+        return „satisfiabil”
+    alege o variabilă x din F
+    //Construiește două subprobleme prin eliminarea lui x
+    F0 <- {C ∈ F | x ∉ C}      // toate clauzele fără x
+    F1 <- {C ∖ {¬x} | C ∈ F și ¬x ∈ C}   // rezolvă pe ¬x
+    F' <- F0 ∪ F1      // rezultatul eliminării lui x
+    return DP(F')
+\end{lstlisting}
+
+\section{Algoritmul DPLL}
+DPLL este de fapt o extindere backtracking a DP, fără pasul costisitor de rezoluție. Ideea cheie a DPLL este regula despicării: în loc să elimine o variabilă prin rezoluție (generând potențial mii de clauze noi), algoritmul alege o variabilă și încearcă atribuirile posibile (True/False) pentru acea variabilă, ramificând recursiv cazul în două subprobleme mai simple. \cite{dpll1962} Astfel se construiește un arbore de căutare a soluției, reducând în profunzime spațiul de căutare prin propagări unitare și backtracking.
+\subsection{Backtracking și pași de bază}
+\begin{enumerate}
+  \item Propagare unitate și eliminare literali puri.
+  \item Dacă nu rămân clauze \textemdash{} SAT.
+  \item Dacă apare clauza vidă \textemdash{} conflict și backtrack.
+  \item Alegem un literal și ramificăm: $l=true$ și $l=false$.
+  \item Continuăm recursiv.
+\end{enumerate}
+\subsection{Descriere Pseudocod}
+\begin{lstlisting}[literate={ă}{{\u{a}}}1 {â}{{\^a}}1 {î}{{\^{\i}}}1 {ș}{{\c{s}}}1 {ț}{{\c{t}}}1 {∈}{{$\in$}}1 {∖}{{$\setminus$}}1 {∪}{{$\cup$}}1 {¬}{{$\neg$}}1 {„}{{\quotedblbase}}1 {”}{{\textquotedblright}}1 {∉}{{$\notin$}}1]
+DPLL(F):
+    dacă F conține clauză vidă:
+        return „nesatisfiabil”
+    dacă F este vidă:
+        return A    // toate clauzele sunt satisfăcute
+    // 1) Propagare unitară
+    dacă există o clauză unitate {l} în F:
+        return DPLL(F, A ∪ {l = true})
+    // 2) Eliminare literal pur
+    dacă există literal pur l în F:
+        return DPLL(F, A ∪ {l = true})
+    // 3) Splitting
+    alege un literal l din F
+    // încearcă l = true
+    result <- DPLL(F, A ∪ {l = true})
+    dacă result ∉ „nesatisfiabil”:
+        return result
+    // încearcă l = false
+    return DPLL(F, A ∪ {l = false})
+\end{lstlisting}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\linewidth]{image.png}
+    \caption{Vizualizare a algoritmului DPLL}
+    \label{sigma}
+\end{figure}
+\section{Experiment}
+Pentru a evalua performanța fiecărui algoritm, se vor rula programele pentru fiecare algoritm pe un număr de seturi de clauze generate aleatoriu. Seturile vor fi de dimensiuni diferite, pentru a măsura performanța algoritmilor în mai multe scenarii. Seturile de clauze au fost generate folosind librăria random din python.
+
+\ În următorul tabel se vor afișa timpii de execuție:
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        & resolution\_time (s) & dp\_time (s) & dpll\_time (s) \\
+        \hline
+        random\_1 & 0.2558 & 0.0005 & 0.0001 \\
+        random\_2 & 0.3753 & 0.0002 & 0.0002 \\
+        random\_3 & 0.3653 & 0.0005 & 0.0002 \\
+        random\_4 & 0.2321 & 0.0004 & 0.0003 \\
+        random\_5 & 0.4926 & 0.0003 & 0.0001 \\
+        random\_6 & 0.5221 & 0.0010 & 0.0002 \\
+        \hline
+    \end{tabular}
+    \caption{Seturi de 18 clauze cu 6 variable}
+    \label{tab:sample_data}
+\end{table}
+\begin{table}[h]
+    \centering
+    \begin{tabular}{|c|c|c|c|}
+        \hline
+        & resolution\_time (s) & dp\_time (s) & dpll\_time (s) \\
+        \hline
+        large\_1 & 121.5874  & 0.0296 & 0.0003 \\
+        large\_2 & 73.4834 & 0.0342 & 0.0009 \\
+        large\_3 & 114.8683 & 0.0182 & 0.0004 \\
+        large\_4 & 117.7019 & 0.0168 & 0.0003 \\
+        large\_5 & 57.2325 & 0.0201 & 0.0006 \\
+        large\_6 & 70.2657 & 0.0208  & 0.0005 \\
+        \hline
+    \end{tabular}
+    \caption{Seturi de 30 clauze cu 8 variable}
+    \label{tab:sample_data}
+\end{table}
+\newpage
+\textbf{\large{Observații:}}
+\\
+\begin{itemize}
+    \item Algoritmul de rezoluție este cel mai încet dintre cele 3, la ambele mărimi de seturi de date. Mai mult decât atât, timpul de execuție variază considerabil.
+    \item La seturi de date și mai mari, algoritmul de rezoluție nu mai funcționeaza deloc, datorită numărului ridicat de clauze generate.
+    \item DP și DPLL au ambele viteze foarte mari, rezolvând seturile de date într-o fracțiune de secundă
+\end{itemize}
+\section{Concluzii}
+În urma studiului comparativ teoretic și experimental realizat asupra algoritmilor Rezoluție, Davis–Putnam (DP) și Davis–Putnam–Logemann–Loveland (DPLL) pentru rezolvarea problemei satisfiabilității propoziționale, s-au observat diferențe semnificative atât în performanța practică, cât și în scalabilitatea acestor metode.
+
+Din punct de vedere teoretic, fiecare algoritm este corect și complet, garantând găsirea unei soluții dacă aceasta există sau dovada nesatisfiabilității formulei. Totuși, Rezoluția suferă de explozia combinatorială cauzată de generarea excesivă de rezolvente, ceea ce conduce rapid la creșterea drastică a timpului și consumului de memorie chiar și pe instanțe de dimensiuni moderate.
+
+Experimental, algoritmul DPLL s-a dovedit net superior, datorită strategiei eficiente de backtracking și propagării literaliilor unitate, care permite reducerea rapidă a spațiului de căutare. În timp ce Rezoluția și DP au fost eficiente doar pe formule relativ mici sau cu structură simplă, DPLL a rezolvat instanțe semnificativ mai mari, demonstrând că poate exploata eficient structurile ascunse ale formulelor întâlnite în aplicații practice.
+\newpage
+\begin{thebibliography}{99}
+  \bibitem{davis-putnam1960} M. Davis, H. Putnam, \textit{A Computing Procedure for Quantification Theory}, J. ACM, 1960.
+  \bibitem{dpll1962} M. Davis, G. Logemann, D. Loveland, \textit{A Machine Program for Theorem Proving}, CACM, 1962.
+  \bibitem{robinson1965} J. A. Robinson, \textit{A Machine-Oriented Logic Based on the Resolution Principle}, J. ACM, 1965.
+  \bibitem{handbook} A. Biere et al. (eds.), \textit{Handbook of Satisfiability}, IOS Press, 2009.
+\end{thebibliography}
+
+\end{document}
