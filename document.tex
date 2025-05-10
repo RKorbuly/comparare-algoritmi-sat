@@ -49,9 +49,11 @@ Problema satisfiabilității booleene (SAT) cere determinarea dacă există o in
 \end{itemize}
 \subsection{Declarație de autenticitate}
 Declar, pe propria răspundere, că acest proiect este rezultatul exclusiv al efortului meu personal și reflectă ideile și contribuțiile mele originale. Toate sursele sunt citate conform standardelor academice, iar sunt dispus să ofer orice clarificări suplimentare. Confirm, de asemenea, că acest proiect nu a fost utilizat anterior în alte scopuri și îmi asum responsabilitatea pentru autenticitatea sa.
+\subsection{Implementare Python și cod sursă}
+Codul sursă a documentului și implementarea algoritmilor în limbajul Python se pot găsi pe link-ul: \href{https://github.com/RKorbuly/comparare-algoritmi-sat.git}{https://github.com/RKorbuly/comparare-algoritmi-sat.git}
 \section{Reprezentarea formulelor și definiții de bază}
-\subsection{Formule CNF}
-O formulă în \emph{forma normală conjunctivă} (CNF) este o conjuncție de clauze, fiecare clauză fiind o disjuncție de literali. Un \emph{literal} este o variabilă booleană $x$ sau negația ei $\neg x$. Exemplu:
+\subsection{Formule FNC}
+O formulă în \emph{forma normală conjunctivă} (FNC) este o conjuncție de clauze, fiecare clauză fiind o disjuncție de literali. Un \emph{literal} este o variabilă booleană $x$ sau negația ei $\neg x$. Exemplu:
 \[
   (x_1\lor\neg x_2\lor x_3)\land(x_2 \lor x_4)\land(\neg x_1\lor\neg x_3\lor{x_4}).
 \]
@@ -92,9 +94,9 @@ Metoda Davis–Putnam, descrisă în 1960, combină rezoluția cu strategii de r
   \item \textbf{Propagare unitate:} dacă există o clauză unitate $\{l\}$, asignăm $l=true$, eliminăm clauzele cu $l$, eliminăm $\neg l$ din rest.
   \item \textbf{Eliminarea literaliilor puri:} literali ce apar doar în aceeași polaritate se pot seta arbitrar pentru a satisface toate clauzele în care apar.
   \item \textbf{Eliminare variabilă prin rezoluție:} alegem variabila $x$ și generăm toate rezolventele dintre clauzele cu $x$ și cele cu $\neg x$, apoi eliminăm clauzele inițiale ce conțin $x$ sau $\neg x$.
-  \item Repetăm pașii până obținem formula vidă (SAT) sau clauza vidă (UNSAT).
+  \item Repetăm pașii până obținem formula vidă (satisfiabil) sau clauza vidă (nesatisfiabil).
 \end{enumerate}
-\subsection{Implementare Python}
+\subsection{Descriere pseudocod}
 \begin{lstlisting}[literate={ă}{{\u{a}}}1 {â}{{\^a}}1 {î}{{\^{\i}}}1 {ș}{{\c{s}}}1 {ț}{{\c{t}}}1 {∈}{{$\in$}}1 {∖}{{$\setminus$}}1 {∪}{{$\cup$}}1 {¬}{{$\neg$}}1 {„}{{\quotedblbase}}1 {”}{{\textquotedblright}}1 {∉}{{$\notin$}}1]
 DP(F):
  dacă F conține clauză vidă:
@@ -110,14 +112,14 @@ DP(F):
 \end{lstlisting}
 
 \section{Algoritmul DPLL}
-DPLL este de fapt o extindere backtracking a DP, fără pasul costisitor de rezoluție. Ideea cheie a DPLL este regula despicării: în loc să elimine o variabilă prin rezoluție (generând potențial mii de clauze noi), algoritmul alege o variabilă și încearcă atribuirile posibile (True/False) pentru acea variabilă, ramificând recursiv cazul în două subprobleme mai simple. \cite{dpll1962} Astfel se construiește un arbore de căutare a soluției, reducând în profunzime spațiul de căutare prin propagări unitare și backtracking.
+DPLL este o extindere backtracking a DP, fără pasul costisitor de rezoluție. Ideea cheie a DPLL este regula despicării: în loc să elimine o variabilă prin rezoluție (generând potențial mii de clauze noi), algoritmul alege o variabilă și încearcă atribuirile posibile (True/False) pentru acea variabilă, ramificând recursiv cazul în două subprobleme mai simple. \cite{dpll1962} Astfel se construiește un arbore de căutare a soluției, reducând în profunzime spațiul de căutare prin propagări unitare și backtracking.
 \subsection{Backtracking și pași de bază}
 \begin{enumerate}
   \item Propagare unitate și eliminare literali puri.
-  \item Dacă nu rămân clauze \textemdash{} SAT.
+  \item Dacă nu rămân clauze \textemdash{} Satisfiabil.
   \item Dacă apare clauza vidă \textemdash{} conflict și backtrack.
   \item Alegem un literal și ramificăm: $l=true$ și $l=false$.
-  \item Continuăm recursiv.
+  \item Se continuă recursiv.
 \end{enumerate}
 \subsection{Descriere Pseudocod}
 \begin{lstlisting}[literate={ă}{{\u{a}}}1 {â}{{\^a}}1 {î}{{\^{\i}}}1 {ș}{{\c{s}}}1 {ț}{{\c{t}}}1 {∈}{{$\in$}}1 {∖}{{$\setminus$}}1 {∪}{{$\cup$}}1 {¬}{{$\neg$}}1 {„}{{\quotedblbase}}1 {”}{{\textquotedblright}}1 {∉}{{$\notin$}}1]
