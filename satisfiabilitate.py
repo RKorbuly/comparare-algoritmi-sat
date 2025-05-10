@@ -15,7 +15,6 @@ def resolution_sat(clauses):
                     resolvent = (c1 - {lit}) | (c2 - {-lit})
                     if not resolvent:
                         return False
-                    # skip tautologies
                     if any(l in resolvent and -l in resolvent for l in resolvent):
                         continue
                     new.add(frozenset(resolvent))
